@@ -1,0 +1,89 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Page Title</title>
+ <meta charset="UTF-8"> 
+</head>
+<body>
+
+<h1>This is a Heading</h1>
+<p id='im'>This is a paragraph. </p>
+
+<div id="status"></div>
+<ul id="objects"></ul>
+
+</body>
+</html> 
+
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.38.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+
+
+<script type="text/javascript">
+
+AWS.config.region = 'us-west-2';
+console.log('Region: ' + AWS.config.region);
+var bucket_name = 'abbarnoy-lambda-test-us-west-2'
+
+var bucket = new AWS.S3({params: {Bucket: bucket_name}});
+  
+  bucket.makeUnauthenticatedRequest('listObjects', bucket.params, function (err, data) {
+    if (err) {
+      document.getElementById('status').innerHTML =
+        'Could not load objects from S3';
+		console.log(err);
+    } else {
+      document.getElementById('status').innerHTML =
+        'Loaded ' + data.Contents.length + ' items from S3';
+      for (var i = 0; i < data.Contents.length; i++) {
+        document.getElementById('objects').innerHTML +=
+          '<li id="' + data.Contents[i].Key + '">' + data.Contents[i].Key + '</li>';
+		  addImage(data.Contents[i].Key);
+      }
+    }
+  });
+ 
+ function addImage(key){
+	  //document.getElementById('objects').innerHTML += '<li> <img src="https://abbarnoy-lambda-test-us-west-2-thumb.s3-us-west-2.amazonaws.com/' + key + '" alt="' + key + '"> </li>';
+	  var thumb = document.createElement("img");
+	  thumb.src = "https://abbarnoy-lambda-test-us-west-2-thumb.s3-us-west-2.amazonaws.com/thumb-" + key;
+	  thumb.alt = key;
+	  console.log("adding image " + key);
+	  //$("h1").append(thumb);
+	  document.getElementById(key).appendChild(thumb);
+	  
+	  /*var img = $('#test img:first');
+if (!img[0].complete) {
+    img.load(function() {
+        // onload code here
+    });
+} else {
+   // image already loaded
+}*/
+ }
+ 
+ function addThumb(key){
+	var thumb = document.createElement("img");
+	var thumbBucket = bucket_name + '-thumb';
+	console.log(thumbBucket);
+	var thumbData = 'thumb-' + key;
+	console.log(thumbData);
+	thumb.src = object2hrefvirt(thumbBucket, thumbData);
+	console.log(thumb.src);
+	thumb.alt = thumbdata;	
+	//return '<img data-s3="thumb" src="' + object2hrefvirt(thumbBucket, thumbData) + '" alt="' + fullpath2filename(thumbData) + '">';
+}
+
+function object2hrefvirt(bucket, object) {
+    if (AWS.config.region === "us-east-1") {
+        return 'https:' + '//' + bucket + '.s3.amazonaws.com/' + object;
+    } else {
+        return 'https:' + '//' + bucket + '.s3-' + AWS.config.region + '.amazonaws.com/' + object;
+    }
+}
+
+function fullpath2filename(path) {
+    return path.replace(/^.*[\\\/]/, '');
+}
+
+</script>
